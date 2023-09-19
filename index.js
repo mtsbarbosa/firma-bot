@@ -1,7 +1,7 @@
 require('dotenv').config()
 const TelegramBot = require('node-telegram-bot-api');
 const { DateTime } = require('luxon');
-const { getEvents, addEvent, addEvents, replaceEvents } = require('./http-out');
+const { getEvents, addEvent, addEvents, replaceEvents } = require('./jsonstorage-http-out');
 
 const botToken = process.env.BOT_TOKEN;
 
