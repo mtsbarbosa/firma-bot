@@ -10,9 +10,10 @@
     "license": "MIT",
     "dependencies": {
         "dotenv": "^16.3.1",
-        "node-telegram-bot-api": "^0.63.0"
+        "node-telegram-bot-api": "^0.63.0",
+        "luxon": "^3.4.3"
     },
     "devDependencies": {
-        "luxon": "^3.4.3"
+        "@flydotio/dockerfile": "^0.4.10"
     }
 }
