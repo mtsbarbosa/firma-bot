@@ -144,7 +144,9 @@ const addOptionType = (msg) => {
 const createSimpleEvent = (chatId) => {
     const poll_question = `Presença em: ${events[chatId].event_name} (${events[chatId].date_time}) - ${events[chatId].location}?`;
     const options = ["Presente", "Ausente"];
-    bot.sendPoll(chatId, poll_question, options, { is_anonymous: false })
+    bot.sendPoll(process.env.POLL_TARGET_CHAT, poll_question, options,
+        { is_anonymous: false, 
+          message_thread_id: process.env.POLL_TARGET_THREAD })
         .then((poll) => {
             addEvent({
                 event_name: events[chatId].event_name, 
@@ -173,7 +175,10 @@ const createMultiDateEvent = (chatId) => {
         return `${option} (${dateTime}) - ${location}`;
     });
     options.push('Ausente em todas');
-    bot.sendPoll(chatId, poll_question, options, { is_anonymous: false, allows_multiple_answers: true })
+    bot.sendPoll(process.env.POLL_TARGET_CHAT, poll_question, options, 
+                 {is_anonymous: false,
+                  allows_multiple_answers: true,
+                  message_thread_id: process.env.POLL_TARGET_THREAD})
         .then((poll) => {
             const newEventsComplete = newEvents.map((event) => {
                 event.poll_message_id = poll.message_id;
@@ -291,7 +296,7 @@ bot.onText(/\/fecha_enquetes/, async (msg) => {
         if (!allEventsOutdated) {
             updatedEventsMap.set(pollId, events);
         }else{
-            bot.stopPoll(chatId, pollId);
+            bot.stopPoll(process.env.POLL_TARGET_CHAT, pollId, {message_thread_id: process.env.POLL_TARGET_THREAD});
         }
     });
 
