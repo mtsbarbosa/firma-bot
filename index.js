@@ -74,7 +74,7 @@ const createTypeKeyboard = {
         ["Reunião interna ord.", "Reunião interna extr."],
         ["Reunião externa"],
         ["Ato regional", "Ato não regional"],
-        ["Pangletagem", "Banca", "Lambe"],
+        ["Panfletagem", "Banca", "Lambe"],
         ["Evento nosso", "Evento interno", "Evento externo"],
         ["Live", "Atividade Online"],
         ["Outros"]
@@ -142,7 +142,8 @@ const addOptionType = (msg) => {
 };
 
 const createSimpleEvent = (chatId) => {
-    const poll_question = `Presença em: ${events[chatId].event_name} (${events[chatId].date_time}) - ${events[chatId].location}?`;
+    const dateTime = DateTime.fromFormat(events[chatId].date_time, 'yyyy-MM-dd HH:mm').toFormat("cccc (dd/MM) à's' HH:mm", { locale: 'pt-BR' })
+    const poll_question = `${events[chatId].event_name}, ${dateTime} - ${events[chatId].location}`;
     const options = ["Presente", "Ausente"];
     bot.sendPoll(process.env.POLL_TARGET_CHAT, poll_question, options,
         { is_anonymous: false, 
@@ -164,6 +165,7 @@ const createMultiDateEvent = (chatId) => {
     const newEvents = [];
     const options = events[chatId].options.map((option, index) => {
         const dateTime = events[chatId].optionDateTimes[index];
+        const dateTimeFormatted = DateTime.fromFormat(dateTime, 'yyyy-MM-dd HH:mm').toFormat("cccc (dd/MM) à's' HH:mm", { locale: 'pt-BR' })
         const location = events[chatId].optionLocations[index];
         const type = events[chatId].optionTypes[index];
         newEvents.push({
@@ -172,7 +174,7 @@ const createMultiDateEvent = (chatId) => {
             location,
             type
         });
-        return `${option} (${dateTime}) - ${location}`;
+        return `${option}, ${dateTimeFormatted} - ${location}`;
     });
     options.push('Ausente em todas');
     bot.sendPoll(process.env.POLL_TARGET_CHAT, poll_question, options, 
