@@ -318,7 +318,7 @@ onReceive(bot, 'poll_answer', (pollAnswer) => {
     const userId = pollAnswer.user.id;
     const pollId = pollAnswer.poll_id;
 
-    console.log('pollAnswer', pollAnswer);
+    //console.log('pollAnswer', pollAnswer);
     /*
 pollAnswer {
   poll_id: '4920718171029110XXX',
