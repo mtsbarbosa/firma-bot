@@ -269,7 +269,7 @@ const generateCalendar = async (bot, chatId) => {
         }
         }
 
-        sendMessage(bot, chatId, calendarMessage.replace(/[-\(\)]/g, '\\-'), { parse_mode: 'MarkdownV2' });
+        sendMessage(bot, chatId, calendarMessage.replace(/[-()]/g, '\\$&'), { parse_mode: 'MarkdownV2' });
     }
     delete events[chatId];
 };
