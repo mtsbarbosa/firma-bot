@@ -1,6 +1,7 @@
 const { DateTime } = require('luxon');
 const { getEvents, addEvent, addEvents, replaceEvents } = require('../http_out/jsonstorage');
 const { sendMessage, sendPoll, stopPoll, onReceiveText, pinChatMessage, unpinChatMessage } = require('../http_out/telegram');
+const { generateUUID } = require('../commons/uuid');
 
 const events = [];
 
@@ -151,6 +152,7 @@ const createSimpleEvent = (bot, chatId, targetChat, targetThread) => {
 
     const addAtividade = (pollId) => {
         addEvent({
+            id: generateUUID(),
             event_name: events[chatId].event_name, 
             date_time: events[chatId].date_time,
             location: events[chatId].location,
@@ -195,6 +197,7 @@ const createMultiDateEvent = (bot, chatId, targetChat, targetThread) => {
     const addAtividades = (pollId) => {
         const newEventsComplete = newEvents.map((event) => {
             event.poll_message_id = pollId;
+            event.id = generateUUID();
             return event;
         });
         addEvents(newEventsComplete);
@@ -257,12 +260,16 @@ const generateCalendar = async (bot, chatId) => {
             // List events within the week
             weekEvents.forEach((event) => {
                 const dateTime = DateTime.fromFormat(event.date_time, 'yyyy-MM-dd HH:mm').toFormat("cccc (dd/MM) à's' HH:mm", { locale: 'pt-BR' })
-            calendarMessage += `➡️ ${event.event_name} - ${event.location}\n⏰ ${dateTime}\n\n`;
+                if(event.outdated){
+                    calendarMessage += `➡️ ~${event.event_name} - ${event.location}~\n⏰ ~${dateTime}~\n\n`;
+                } else {
+                    calendarMessage += `➡️ ${event.event_name} - ${event.location}\n⏰ ${dateTime}\n\n`;
+                }
             });
         }
         }
 
-        sendMessage(bot, chatId, calendarMessage, { parse_mode: 'Markdown' });
+        sendMessage(bot, chatId, calendarMessage.replace(/[-\(\)]/g, '\\-'), { parse_mode: 'MarkdownV2' });
     }
     delete events[chatId];
 };
@@ -332,7 +339,12 @@ const init = (bot, targetChat, targetThread) => {
             });
             
             if (!allEventsOutdated) {
-                updatedEventsMap.set(pollId, events);
+                updatedEventsMap.set(pollId, events.map((event) => {
+                    if (!event.date_time) return event;
+                    const eventDate = DateTime.fromFormat(event.date_time, 'yyyy-MM-dd HH:mm');
+                    event.outdated = eventDate <= currentDate;
+                    return event;
+                }));
             }else{
                 stopPoll(bot, targetChat, pollId, {message_thread_id: targetThread});
                 unpinChatMessage(bot, targetChat, pollId);
