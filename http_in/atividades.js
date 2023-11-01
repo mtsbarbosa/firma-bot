@@ -4,11 +4,11 @@ const { sendMessage, sendPoll, stopPoll, onReceiveText, pinChatMessage, unpinCha
 
 const events = [];
 
-const DATE = 0;
-const EVENT_NAME = 1;
-const CREATE_POLL = 2;
-const LOCATION = 3;
-const TYPE = 4;
+const CREATE_ATIVIDADE = 0;
+const DATE = 1;
+const LOCATION = 2;
+const TYPE = 3;
+const EVENT_NAME = 4;
 const ADD_OPTION_NAME = 5;
 const ADD_OPTION_DATETIME = 6;
 const ADD_OPTION_LOCATION = 7;
@@ -16,12 +16,12 @@ const ADD_OPTION_TYPE = 8;
 const CALENDAR_REQUEST = 9;
 
 const createEventMessage = "Você quer uma atividade simples ou multipla?";
-const addOptionNameMessage = "Por favor responda com o nome da próxima opção (responda 'ok' quando finalizado).";
+const addOptionNameMessage = "Por favor responda com o nome da próxima atividade (responda 'ok' quando finalizado).";
 
-const startConversation = (bot, msg) => {
+const startAtividade = (bot, msg, pure) => {
     const chatId = msg.chat.id;
     sendMessage(bot, chatId, createEventMessage);
-    events[chatId] = { state: CREATE_POLL };
+    events[chatId] = { state: CREATE_ATIVIDADE, pure };
 };
 
 const createLocationKeyboard = {
@@ -59,8 +59,12 @@ const receiveEventName = (bot, msg, targetChat, targetThread) => {
         events[chatId].optionLocations = [];
         events[chatId].optionTypes = [];
     } else {
-        sendMessage(bot, chatId, `Nome do evento: ${events[chatId].event_name}\nCriando a enquete...`);
-        createSimpleEvent(chatId, targetChat, targetThread);
+        if(events[chatId].pure){
+            sendMessage(bot, chatId, `Evento ${events[chatId].event_name} adicionado!`);
+        }else{
+            sendMessage(bot, chatId, `Nome do evento: ${events[chatId].event_name}\nCriando a enquete...`);
+        }
+        createSimpleEvent(bot, chatId, targetChat, targetThread);
     }
 };
 
@@ -99,10 +103,14 @@ const addOptionName = (bot, msg, targetChat, targetThread) => {
     const chatId = msg.chat.id;
     if (msg.text.toLowerCase() === 'ok') {
         if (events[chatId].options.length === 0) {
-            sendMessage(bot, chatId, "Você não adicionou nenhuma opção para a enquete. Adicione ao menos uma opção.");
+            sendMessage(bot, chatId, "Você não adicionou nenhuma atividade para a enquete. Adicione ao menos uma atividade.");
         } else {
-            sendMessage(bot, chatId, `Você adicionou ${events[chatId].options.length} opções para a enquete múltipla.\nCriando a enquete...`);
-            createMultiDateEvent(chatId, targetChat, targetThread);
+            if(events[chatId].pure){
+                sendMessage(bot, chatId, `Você adicionou ${events[chatId].options.length} atividades.`);
+            } else {
+                sendMessage(bot, chatId, `Você adicionou ${events[chatId].options.length} opções para a enquete múltipla.\nCriando a enquete...`);
+            }
+            createMultiDateEvent(bot, chatId, targetChat, targetThread);
         }
     } else {
         events[chatId].options.push(msg.text);
@@ -140,20 +148,30 @@ const createSimpleEvent = (bot, chatId, targetChat, targetThread) => {
     const dateTime = DateTime.fromFormat(events[chatId].date_time, 'yyyy-MM-dd HH:mm').toFormat("cccc (dd/MM) à's' HH:mm", { locale: 'pt-BR' })
     const poll_question = `${events[chatId].event_name}, ${dateTime} - ${events[chatId].location}`;
     const options = ["Presente", "Ausente"];
-    sendPoll(bot, targetChat, poll_question, options,
-        { is_anonymous: false, 
-          message_thread_id: targetThread })
-    .then((poll) => {
+
+    const addAtividade = (pollId) => {
         addEvent({
             event_name: events[chatId].event_name, 
             date_time: events[chatId].date_time,
             location: events[chatId].location,
             type: events[chatId].type,
-            poll_message_id: poll.message_id
+            poll_message_id: pollId
         });
-        pinChatMessage(bot, targetChat, poll.message_id);
         delete events[chatId];
-    });
+    };
+
+    if(events[chatId].pure){
+        addAtividade(undefined);
+    }else{
+        sendPoll(bot, targetChat, poll_question, options,
+            { is_anonymous: false, 
+            message_thread_id: targetThread })
+        .then((poll) => {
+            addAtividade(poll.message_id);
+            pinChatMessage(bot, targetChat, poll.message_id);
+        })
+        .catch((e) => console.log('error polling => ', e));
+    }
 };
 
 const createMultiDateEvent = (bot, chatId, targetChat, targetThread) => {
@@ -173,19 +191,28 @@ const createMultiDateEvent = (bot, chatId, targetChat, targetThread) => {
         return `${option}, ${dateTimeFormatted} - ${location}`;
     });
     options.push('Ausente em todas');
-    sendPoll(bot, targetChat, poll_question, options, 
-        {is_anonymous: false,
-         allows_multiple_answers: true,
-         message_thread_id: targetThread})
-    .then((poll) => {
+
+    const addAtividades = (pollId) => {
         const newEventsComplete = newEvents.map((event) => {
-            event.poll_message_id = poll.message_id;
+            event.poll_message_id = pollId;
             return event;
         });
         addEvents(newEventsComplete);
-        pinChatMessage(bot, targetChat, poll.message_id);
         delete events[chatId];
-    });
+    };
+
+    if(events[chatId].pure){
+        addAtividades(undefined);
+    }else{
+        sendPoll(bot, targetChat, poll_question, options, 
+            {is_anonymous: false,
+             allows_multiple_answers: true,
+             message_thread_id: targetThread})
+        .then((poll) => {
+            addAtividades(poll.message_id);
+            pinChatMessage(bot, targetChat, poll.message_id);
+        });
+    }
 };
 
 const generateCalendar = async (bot, chatId) => {
@@ -243,17 +270,27 @@ const generateCalendar = async (bot, chatId) => {
 const groupByPollMessageId = (events) => {
     return events.reduce((result, item) => {
         const { poll_message_id, ...rest } = item;
-        if (!result[poll_message_id]) {
-          result[poll_message_id] = [];
+        if(poll_message_id !== undefined){
+            if (!result[poll_message_id]) {
+                result[poll_message_id] = [];
+            }
+            result[poll_message_id].push({ poll_message_id, ...rest });
         }
-        result[poll_message_id].push({ poll_message_id, ...rest });
         return result;
       }, {});
 };
 
+const filterByPollMessageUndefined = (events) => {
+    return events.filter((item) => item.poll_message_id === undefined, {});
+};
+
 const init = (bot, targetChat, targetThread) => {
-    onReceiveText(bot, /\/atividade/, (msg) => {
-        startConversation(bot, msg);
+    onReceiveText(bot, /\/atividade$/, (msg) => {
+        startAtividade(bot, msg, false);
+    });
+
+    onReceiveText(bot, /\/atividade_pura/, (msg) => {
+        startAtividade(bot, msg, true);
     });
     
     onReceiveText(bot, /simples/, (msg) => {
@@ -282,6 +319,7 @@ const init = (bot, targetChat, targetThread) => {
     
         const { events: fetchedEvents } = await getEvents();
         const groupedEvents = groupByPollMessageId(fetchedEvents);
+        const undefinedPollEvents = filterByPollMessageUndefined(fetchedEvents);
     
         // Create a Map to store non-outdated events
         const updatedEventsMap = new Map();
@@ -300,50 +338,23 @@ const init = (bot, targetChat, targetThread) => {
                 unpinChatMessage(bot, targetChat, pollId);
             }
         });
-    
-        // Convert the updated events back to an array
-        const updatedEvents = [].concat(...updatedEventsMap.values());
-    
-        // Replace the events
-        replaceEvents(updatedEvents);
-    
-        sendMessage(bot, chatId, "Enquetes vencidas finalizadas.");
-    });
-    
-    onReceiveText(bot, /\/fecha_enquetes/, async (msg) => {
-        const chatId = msg.chat.id;
-        const currentDate = DateTime.now();
-    
-        const { events: fetchedEvents } = await getEvents();
-        const groupedEvents = groupByPollMessageId(fetchedEvents);
-    
-        // Create a Map to store non-outdated events
-        const updatedEventsMap = new Map();
-    
-        Object.entries(groupedEvents).forEach(([pollId, events]) => {
-            const allEventsOutdated = events.every(event => {
-                if (!event.date_time) return false;
-                const eventDate = DateTime.fromFormat(event.date_time, 'yyyy-MM-dd HH:mm');
-                return eventDate <= currentDate;
-            });
-            
-            if (!allEventsOutdated) {
-                updatedEventsMap.set(pollId, events);
-            }else{
-                stopPoll(bot, targetChat, pollId, {message_thread_id: targetThread});
-                unpinChatMessage(bot, targetChat, pollId);
-            }
-        });
-    
-        // Convert the updated events back to an array
-        const updatedEvents = [].concat(...updatedEventsMap.values());
-    
-        // Replace the events
-        replaceEvents(updatedEvents);
-    
-        sendMessage(bot, chatId, "Enquetes vencidas finalizadas.");
-    });
 
+        const futureUndefinedPollEvents = undefinedPollEvents.filter((event) => {
+            if(event.date_time){
+                const eventDate = DateTime.fromFormat(event.date_time, 'yyyy-MM-dd HH:mm');
+                return eventDate > currentDate;
+            }
+            return false;
+        });
+    
+        // Convert the updated events back to an array
+        const updatedEvents = futureUndefinedPollEvents.concat(...updatedEventsMap.values());
+    
+        // Replace the events
+        replaceEvents(updatedEvents);
+    
+        sendMessage(bot, chatId, "Enquetes vencidas finalizadas.");
+    });
 }
 
 const onReceiveAnyText = (bot, msg, targetChat, targetThread) => {
