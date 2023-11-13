@@ -114,9 +114,13 @@ const addOptionName = (bot, msg, targetChat, targetThread) => {
             createMultiDateEvent(bot, chatId, targetChat, targetThread);
         }
     } else {
-        events[chatId].options.push(msg.text);
-        sendMessage(bot, chatId, `Opção '${msg.text}' adicionada. Por favor responda com data e hora da atividade no formato (e.g., '2023-09-13 15:00').`);
-        events[chatId].state = ADD_OPTION_DATETIME;
+        if (msg.text.length >= 50) {
+            sendMessage(bot, chatId, "Texto muito longo. Reescreva com menos de 50 caracteres:");
+        } else {
+            events[chatId].options.push(msg.text);
+            sendMessage(bot, chatId, `Opção '${msg.text}' adicionada. Por favor responda com data e hora da atividade no formato (e.g., '2023-09-13 15:00').`);
+            events[chatId].state = ADD_OPTION_DATETIME;
+        }
     }
 };
 
