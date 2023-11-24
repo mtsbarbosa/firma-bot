@@ -453,9 +453,6 @@ const init = (bot, targetChat, targetThread) => {
 const onReceiveAnyText = (bot, msg, targetChat, targetThread) => {
     const chatId = msg.chat.id;
 
-    //console.log('msg text', msg);
-    //console.log('msg text', msg.entities[0]["user"]);
-
     if (events[chatId] && events[chatId].state === DATE) {
         receiveDateTime(bot, msg);
     } else if (events[chatId] && events[chatId].state === EVENT_NAME) {
