@@ -1,21 +1,22 @@
 const { DateTime } = require('luxon');
-const { filterEventsByDaysLimit, onReceiveAskParticipation } = require('../http_in/atividades');
-const { sendMessage } = require('../http_out/telegram');
-const { getParticipation, getEvents } = require('../http_out/jsonstorage');
+const { onReceiveAskParticipation } = require('../../http_in/atividades');
+const { getParticipation, getEvents } = require('../../http_out/jsonstorage');
+const { sendMessage } = require('../../http_out/telegram');
 
-jest.mock('../http_out/jsonstorage.js');
+jest.mock('../../http_out/jsonstorage.js');
 
-const events = [
-  { "event_name": "1", "date_time": "2023-11-14 18:30" },
-  { "event_name": "2", "date_time": "2023-11-12 10:00" },
-  { "event_name": "3", "date_time": "2023-11-13 09:15" },
-];
-
-jest.mock('../http_out/telegram.js', () => {
+jest.mock('../../http_out/telegram.js', () => {
   return {
     sendMessage: jest.fn()
   };
 });
+
+jest.mock('luxon', () => ({
+  DateTime: {
+    now: jest.fn(() => jest.requireActual('luxon').DateTime.fromISO('2023-11-15T12:00:00.000Z')),
+    fromFormat: jest.fn((a, b) => jest.requireActual('luxon').DateTime.fromFormat(a, b))
+  },
+}));
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -26,36 +27,7 @@ beforeEach(() => {
     {"events":[{"event_name":"ato 2","date_time":"2023-11-12 15:00","location":"São Paulo - Bairro","type":"Ato não regional"},{"poll_message_id":79,"event_name":"reuniao","date_time":"2023-09-13 15:00","location":"Diadema - Centro","type":"Evento externo","outdated":true},{"poll_message_id":79,"event_name":"ato","date_time":"2023-11-13 15:00","location":"RGS - Bairro","type":"Ato regional","outdated":false},{"id":"c6f25ea1-ef2e-409a-ad76-0ea0ca224496","event_name":"ato 3","date_time":"2023-09-14 15:00","location":"Ribeirão Pires - Bairro","type":"Ato regional","poll_message_id":81}]}));
 });
 
-test('filterEventsByDaysLimit returns events older than two days', () => {
-  const mockDateTime = jest.spyOn(DateTime, 'local').mockImplementation(() =>
-    DateTime.fromISO('2023-11-15T12:00:00.000Z')
-  );
-  const filteredEvents = filterEventsByDaysLimit(events, 2);
-  expect(filteredEvents.sort()).toEqual([
-    { "event_name": "2", "date_time": "2023-11-12 10:00" },
-  ].sort());
-});
-
-test('filterEventsByDaysLimit returns an empty array when no events match the limit', () => {
-  const mockDateTime = jest.spyOn(DateTime, 'local').mockImplementation(() =>
-    DateTime.fromISO('2023-11-15T12:00:00.000Z')
-  );
-  const filteredEvents = filterEventsByDaysLimit(events, 10);
-  expect(filteredEvents).toEqual([]);
-});
-
-test('filterEventsByDaysLimit returns all events when limit is zero', () => {
-  const mockDateTime = jest.spyOn(DateTime, 'local').mockImplementation(() =>
-    DateTime.fromISO('2023-11-15T12:00:00.000Z')
-  );
-  const filteredEvents = filterEventsByDaysLimit(events, 0);
-  expect(filteredEvents).toEqual(events);
-});
-
 test('onReceiveAskParticipation single poll with one non-voter', async () => {
-  const mockDateTime = jest.spyOn(DateTime, 'local').mockImplementation(() =>
-    DateTime.fromISO('2023-11-15T12:00:00.000Z')
-  );
   getParticipation.mockImplementation(() => Promise.resolve(Promise.resolve(
     {votes:{"79":
                {"123":
@@ -94,9 +66,6 @@ test('onReceiveAskParticipation single poll with one non-voter', async () => {
 });
 
 test('onReceiveAskParticipation single poll with two non-voters', async () => {
-  const mockDateTime = jest.spyOn(DateTime, 'local').mockImplementation(() =>
-    DateTime.fromISO('2023-11-15T12:00:00.000Z')
-  );
   getParticipation.mockImplementation(() => Promise.resolve(Promise.resolve(
     {votes:{"79":
                {"123":
@@ -132,9 +101,6 @@ test('onReceiveAskParticipation single poll with two non-voters', async () => {
 });
 
 test('onReceiveAskParticipation two polls with single non-voter', async () => {
-  const mockDateTime = jest.spyOn(DateTime, 'local').mockImplementation(() =>
-    DateTime.fromISO('2023-11-15T12:00:00.000Z')
-  );
   getParticipation.mockImplementation(() => Promise.resolve(Promise.resolve(
     {votes:{"79":
               {"124":
@@ -178,9 +144,6 @@ test('onReceiveAskParticipation two polls with single non-voter', async () => {
 });
 
 test('onReceiveAskParticipation no poll', async () => {
-  const mockDateTime = jest.spyOn(DateTime, 'local').mockImplementation(() =>
-    DateTime.fromISO('2023-11-15T12:00:00.000Z')
-  );
   getParticipation.mockImplementation(() => Promise.resolve(Promise.resolve(
     {votes:{"79":
               {"124":
@@ -202,9 +165,6 @@ test('onReceiveAskParticipation no poll', async () => {
 });
 
 test('onReceiveAskParticipation no vote', async () => {
-  const mockDateTime = jest.spyOn(DateTime, 'local').mockImplementation(() =>
-    DateTime.fromISO('2023-11-15T12:00:00.000Z')
-  );
   getParticipation.mockImplementation(() => Promise.resolve(Promise.resolve(
     {votes:{"81":
                 {"123":

@@ -32,12 +32,6 @@ const onReceiveText = async (bot, regexp, callback) => {
     return bot.onText(regexp, callback);
 }
 
-const getChatMembers = async (bot, chatId) => {
-    const chat = await bot.getChat(chatId);
-    console.log('chat', chat);
-    console.log('members', chat.active_usernames);
-}
-
 module.exports = {
     sendMessage,
     initializeBot,
@@ -46,6 +40,5 @@ module.exports = {
     pinChatMessage,
     unpinChatMessage,
     onReceive,
-    onReceiveText,
-    getChatMembers
+    onReceiveText
 }

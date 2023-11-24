@@ -1,4 +1,7 @@
-const { getParticipation } = require("../http_out/jsonstorage");
+const { DateTime } = require("luxon");
+const { getParticipation, getEvents } = require("../http_out/jsonstorage");
+const { filterEventsByDaysLimit } = require("../logic/events");
+const { sendMessage } = require("../http_out/telegram");
 
 const unvotedByPollId = async (pollIds) => {
     const participation = await getParticipation();
@@ -25,6 +28,57 @@ const unvotedByPollId = async (pollIds) => {
     return usersWhoHaventVoted;
 };
 
+const askParticipation = async (bot, targetChat, targetThread, daysLimit) => {
+    const { events: userEvents } = await getEvents();
+
+    const pollsMatchingDays = filterEventsByDaysLimit(DateTime.now(), userEvents, daysLimit).map((event) => event.poll_message_id);
+
+    const unvoted = await unvotedByPollId(pollsMatchingDays);
+
+    const initialText = 'Favor responder à enquete: ';
+
+    Object.keys(unvoted).forEach(pollId => {
+        let currentOffset = initialText.length;
+        const userOffset = {};
+        
+        if(unvoted[pollId].length > 0){
+            const mentions = unvoted[pollId].map((user, index) => {
+                const mention = user.username ? `@${user.username} ` : `${user.name} ${user.surname ? user.surname : ''} `;
+                userOffset[user.id] = currentOffset;
+                currentOffset = currentOffset + mention.length + 1;
+                return mention;
+            });
+
+            const entities = unvoted[pollId].reduce((acc, user) => {
+                if(user.username.length === 0){
+                    const mention = `${user.name} ${user.surname.length > 0 ? user.surname : ''}`;
+                    return [...acc,  {
+                        type: 'text_mention',
+                        user: user.surname.length > 0 ? {
+                            id: user.id,
+                            first_name: user.name,
+                            last_name: user.surname,
+                          } : {
+                            id: user.id,
+                            first_name: user.name
+                          },
+                        offset: userOffset[user.id],
+                        length: mention.length,
+                      }];
+                }
+                return acc;
+            }, []);
+    
+            sendMessage(bot, targetChat, `${initialText}${mentions}`, {
+                message_thread_id: targetThread,
+                reply_to_message_id: pollId,
+                entities: entities
+            });
+        }
+      });
+}
+
 module.exports = {
-    unvotedByPollId
+    unvotedByPollId,
+    askParticipation
 }

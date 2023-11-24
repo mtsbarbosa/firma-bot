@@ -1,14 +1,14 @@
-const { listMembers, addMembers } = require("../http_in/membros");
-const { getParticipation, upsertMembers } = require("../http_out/jsonstorage");
-const { sendMessage } = require("../http_out/telegram");
+const { listMembers, addMembers } = require("../../http_in/membros");
+const { getParticipation, upsertMembers } = require("../../http_out/jsonstorage");
+const { sendMessage } = require("../../http_out/telegram");
 
-jest.mock('../http_out/telegram.js', () => {
+jest.mock('../../http_out/telegram.js', () => {
     return {
       sendMessage: jest.fn()
     };
   });
 
-jest.mock('../http_out/jsonstorage.js');
+jest.mock('../../http_out/jsonstorage.js');
 
 beforeEach(() => {
   jest.clearAllMocks();

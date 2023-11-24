@@ -1,8 +1,10 @@
 const { DateTime } = require('luxon');
-const { getEvents, addEvent, addEvents, replaceEvents, upsertVotes } = require('../http_out/jsonstorage');
-const { sendMessage, sendPoll, stopPoll, onReceiveText, pinChatMessage, unpinChatMessage, onReceive } = require('../http_out/telegram');
+const { addEvent, addEvents, upsertVotes } = require('../http_out/jsonstorage');
+const { sendMessage, sendPoll, onReceiveText, pinChatMessage, onReceive } = require('../http_out/telegram');
 const { generateUUID } = require('../commons/uuid');
-const { unvotedByPollId } = require('../controllers/participation');
+const { askParticipation } = require('../controllers/participation');
+const { generateCalendar } = require('../controllers/calendar');
+const { onFechaEnquetes } = require('../controllers/events');
 
 const events = [];
 
@@ -223,149 +225,18 @@ const createMultiDateEvent = (bot, chatId, targetChat, targetThread) => {
     }
 };
 
-const generateCalendar = async (bot, chatId) => {
-    const { events: userEvents } = await getEvents();
-    if (userEvents.length === 0) {
-        sendMessage(bot, chatId, "Sem atividades para mostrar no calendário.");
-    } else {
-        userEvents.sort((a, b) => (a.date_time > b.date_time) ? 1 : -1);
-
-        let calendarMessage = "*CALENDÁRIO*:\n\n";
-
-        // Group events by month
-        const eventsByMonth = userEvents.reduce((acc, event) => {
-            const monthKey = DateTime.fromFormat(event.date_time, 'yyyy-MM-dd HH:mm').toFormat('LLLL yyyy', { locale: 'pt-BR' });
-            if (!acc[monthKey]) {
-                acc[monthKey] = [];
-            }
-            acc[monthKey].push(event);
-            return acc;
-        }, {});
-
-        // Iterate over each month and its events
-        for (const [month, monthEvents] of Object.entries(eventsByMonth)) {
-        // Format month title with emoji
-        calendarMessage += `🗓️ *${month.toUpperCase()}*\n`;
-
-        // Group events by week within the month
-        const eventsByWeek = monthEvents.reduce((acc, event) => {
-            const weekNumber = DateTime.fromFormat(event.date_time, 'yyyy-MM-dd HH:mm').toFormat('W', { locale: 'pt-BR' });
-            if (!acc[weekNumber]) {
-            acc[weekNumber] = [];
-            }
-            acc[weekNumber].push(event);
-            return acc;
-        }, {});
-
-        // Iterate over each week and its events
-        for (const [week, weekEvents] of Object.entries(eventsByWeek)) {
-            // Format week title
-            calendarMessage += `⤵️ semana ${week}\n`;
-
-            // List events within the week
-            weekEvents.forEach((event) => {
-                const dateTime = DateTime.fromFormat(event.date_time, 'yyyy-MM-dd HH:mm').toFormat("cccc (dd/MM) à's' HH:mm", { locale: 'pt-BR' })
-                if(event.outdated){
-                    calendarMessage += `➡️ ~${event.event_name} - ${event.location}~\n⏰ ~${dateTime}~\n\n`;
-                } else {
-                    calendarMessage += `➡️ ${event.event_name} - ${event.location}\n⏰ ${dateTime}\n\n`;
-                }
-            });
-        }
-        }
-
-        sendMessage(bot, chatId, calendarMessage.replace(/[-()]/g, '\\$&'), { parse_mode: 'MarkdownV2' });
-    }
-    delete events[chatId];
-};
-
-const groupByPollMessageId = (events) => {
-    return events.reduce((result, item) => {
-        const { poll_message_id, ...rest } = item;
-        if(poll_message_id !== undefined){
-            if (!result[poll_message_id]) {
-                result[poll_message_id] = [];
-            }
-            result[poll_message_id].push({ poll_message_id, ...rest });
-        }
-        return result;
-      }, {});
-};
-
-const filterByPollMessageUndefined = (events) => {
-    return events.filter((item) => item.poll_message_id === undefined, {});
-};
-
 const onReceiveCalendar = (bot, msg) => {
     const chatId = msg.chat.id;
     events[chatId] = { state: CALENDAR_REQUEST };
     generateCalendar(bot, chatId);
+    delete events[chatId];
 };
 
-const filterEventsByDaysLimit = (events, daysLimit) => {
-    const currentDate = DateTime.local();
-    const minDate = currentDate.minus({ days: daysLimit });
-  
-    const filteredEvents = events.filter(event => {
-      const eventDate = DateTime.fromFormat(event.date_time, 'yyyy-MM-dd HH:mm');
-      return eventDate < minDate;
-    });
-  
-    return filteredEvents;
-};
-
-const onReceiveAskParticipation = async (bot, targetChat, targetThread, msg) => {
-    const chatId = msg.chat.id;
+const onReceiveAskParticipation = (bot, targetChat, targetThread, msg) => {
     const parts = msg.text.split(" ")
     const daysLimit = new Number(parts[parts.length - 1]);
 
-    const { events: userEvents } = await getEvents();
-
-    const pollsMatchingDays = filterEventsByDaysLimit(userEvents, daysLimit).map((event) => event.poll_message_id);
-
-    const unvoted = await unvotedByPollId(pollsMatchingDays);
-
-    const initialText = 'Favor responder à enquete: ';
-
-    Object.keys(unvoted).forEach(pollId => {
-        let currentOffset = initialText.length;
-        const userOffset = {};
-        
-        if(unvoted[pollId].length > 0){
-            const mentions = unvoted[pollId].map((user, index) => {
-                const mention = user.username ? `@${user.username} ` : `${user.name} ${user.surname ? user.surname : ''} `;
-                userOffset[user.id] = currentOffset;
-                currentOffset = currentOffset + mention.length + 1;
-                return mention;
-            });
-    
-            const entities = unvoted[pollId].reduce((acc, user) => {
-                if(user.username.length === 0){
-                    const mention = `${user.name} ${user.surname.length > 0 ? user.surname : ''}`;
-                    return [...acc,  {
-                        type: 'text_mention',
-                        user: user.surname.length > 0 ? {
-                            id: user.id,
-                            first_name: user.name,
-                            last_name: user.surname,
-                          } : {
-                            id: user.id,
-                            first_name: user.name
-                          },
-                        offset: userOffset[user.id],
-                        length: mention.length,
-                      }];
-                }
-                return acc;
-            }, []);
-    
-            sendMessage(bot, targetChat, `${initialText}${mentions}`, {
-                message_thread_id: targetThread,
-                reply_to_message_id: pollId,
-                entities: entities
-            });
-        }
-      });
+    return askParticipation(bot, targetChat, targetThread, daysLimit);
 }
 
 const init = (bot, targetChat, targetThread) => {
@@ -392,54 +263,13 @@ const init = (bot, targetChat, targetThread) => {
     });
     
     onReceiveText(bot, /\/calendario/, (msg) => onReceiveCalendar(bot, msg));
-    
-    onReceiveText(bot, /\/fecha_enquetes/, async (msg) => {
-        const chatId = msg.chat.id;
-        const currentDate = DateTime.now();
-    
-        const { events: fetchedEvents } = await getEvents();
-        const groupedEvents = groupByPollMessageId(fetchedEvents);
-        const undefinedPollEvents = filterByPollMessageUndefined(fetchedEvents);
-    
-        // Create a Map to store non-outdated events
-        const updatedEventsMap = new Map();
-    
-        Object.entries(groupedEvents).forEach(([pollId, events]) => {
-            const allEventsOutdated = events.every(event => {
-                if (!event.date_time) return false;
-                const eventDate = DateTime.fromFormat(event.date_time, 'yyyy-MM-dd HH:mm');
-                return eventDate <= currentDate;
-            });
-            
-            if (!allEventsOutdated) {
-                updatedEventsMap.set(pollId, events.map((event) => {
-                    if (!event.date_time) return event;
-                    const eventDate = DateTime.fromFormat(event.date_time, 'yyyy-MM-dd HH:mm');
-                    event.outdated = eventDate <= currentDate;
-                    return event;
-                }));
-            }else{
-                stopPoll(bot, targetChat, pollId, {message_thread_id: targetThread});
-                unpinChatMessage(bot, targetChat, pollId);
-            }
-        });
 
-        const futureUndefinedPollEvents = undefinedPollEvents.filter((event) => {
-            if(event.date_time){
-                const eventDate = DateTime.fromFormat(event.date_time, 'yyyy-MM-dd HH:mm');
-                return eventDate > currentDate;
-            }
-            return false;
-        });
-    
-        // Convert the updated events back to an array
-        const updatedEvents = futureUndefinedPollEvents.concat(...updatedEventsMap.values());
-    
-        // Replace the events
-        replaceEvents(updatedEvents);
-    
-        sendMessage(bot, chatId, "Enquetes vencidas finalizadas.");
+    onReceiveText(bot, /limpa_memoria/, (msg) => {
+        events = []
+        sendMessage(bot, chatId, "Memória limpa.");
     });
+    
+    onReceiveText(bot, /\/fecha_enquetes/, (msg) => onFechaEnquetes(bot, targetChat, targetThread, msg));
 
     onReceiveText(bot, /\/cobrar_participacao/, (msg) => onReceiveAskParticipation(bot, targetChat, targetThread, msg));
 
@@ -475,6 +305,6 @@ const onReceiveAnyText = (bot, msg, targetChat, targetThread) => {
 module.exports = {
     init,
     onReceiveAnyText,
-    filterEventsByDaysLimit,
-    onReceiveAskParticipation
+    onReceiveAskParticipation,
+    onReceiveCalendar
 };
