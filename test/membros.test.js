@@ -11,9 +11,10 @@ jest.mock('../http_out/telegram.js', () => {
 jest.mock('../http_out/jsonstorage.js');
 
 beforeEach(() => {
-    getParticipation.mockImplementation(() => Promise.resolve({
-        members: []
-      }));
+  jest.clearAllMocks();
+  getParticipation.mockImplementation(() => Promise.resolve({
+      members: []
+  }));
 });
 
 test('addMembers should add a single complete member', async () => {

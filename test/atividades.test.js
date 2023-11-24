@@ -18,6 +18,7 @@ jest.mock('../http_out/telegram.js', () => {
 });
 
 beforeEach(() => {
+  jest.clearAllMocks();
   getParticipation.mockImplementation(() => Promise.resolve(
       {"votes":{},
        "members":[]}));
