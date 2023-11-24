@@ -1,6 +1,7 @@
 require('dotenv').config();
-const { initializeBot, onReceive } = require('./http_out/telegram');
+const { initializeBot, onReceive, getChatMembers } = require('./http_out/telegram');
 const { init : initAtividades, onReceiveAnyText : onReceiveAnyAtividadesText } = require('./http_in/atividades');
+const { init : initMembros } = require('./http_in/membros');
 
 const botToken = process.env.BOT_TOKEN;
 const targetChat = process.env.POLL_TARGET_CHAT;
@@ -25,34 +26,12 @@ function checkNonResponders() {
 const init = (targetChat, targetThread) => {
     const bot = initializeBot(botToken);
     initAtividades(bot, targetChat, targetThread);
-
-    onReceive(bot, 'poll_answer', (pollAnswer) => {
-        const userId = pollAnswer.user.id;
-        const pollId = pollAnswer.poll_id;
-    
-        //console.log('pollAnswer', pollAnswer);
-        /*
-    pollAnswer {
-      poll_id: '4920718171029110XXX',
-      user: {
-        id: 103100XXX,
-        is_bot: false,
-        first_name: 'MyName',
-        last_name: 'MySurname',
-        username: 'myusername'
-      },
-      option_ids: [ 1 ]
-    }
-        */
-    
-        // Store the user's response in the database
-        /*userResponses[userId] = {
-            pollId,
-            choice: pollAnswer.option_ids[0], // Store the choice made by the user
-        };*/
-    });
+    initMembros(bot, targetChat, targetThread);
 
     onReceive(bot, 'text', (msg) => {
+        if(msg.text === '/membros'){
+            getChatMembers(bot, targetChat);
+        }
         onReceiveAnyAtividadesText(bot, msg, targetChat, targetThread);
     });
 };
