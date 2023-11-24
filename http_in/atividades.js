@@ -1,7 +1,8 @@
 const { DateTime } = require('luxon');
-const { getEvents, addEvent, addEvents, replaceEvents } = require('../http_out/jsonstorage');
-const { sendMessage, sendPoll, stopPoll, onReceiveText, pinChatMessage, unpinChatMessage } = require('../http_out/telegram');
+const { getEvents, addEvent, addEvents, replaceEvents, upsertVotes } = require('../http_out/jsonstorage');
+const { sendMessage, sendPoll, stopPoll, onReceiveText, pinChatMessage, unpinChatMessage, onReceive } = require('../http_out/telegram');
 const { generateUUID } = require('../commons/uuid');
+const { unvotedByPollId } = require('../controllers/participation');
 
 const events = [];
 
@@ -295,6 +296,78 @@ const filterByPollMessageUndefined = (events) => {
     return events.filter((item) => item.poll_message_id === undefined, {});
 };
 
+const onReceiveCalendar = (bot, msg) => {
+    const chatId = msg.chat.id;
+    events[chatId] = { state: CALENDAR_REQUEST };
+    generateCalendar(bot, chatId);
+};
+
+const filterEventsByDaysLimit = (events, daysLimit) => {
+    const currentDate = DateTime.local();
+    const minDate = currentDate.minus({ days: daysLimit });
+  
+    const filteredEvents = events.filter(event => {
+      const eventDate = DateTime.fromFormat(event.date_time, 'yyyy-MM-dd HH:mm');
+      return eventDate < minDate;
+    });
+  
+    return filteredEvents;
+};
+
+const onReceiveAskParticipation = async (bot, targetChat, targetThread, msg) => {
+    const chatId = msg.chat.id;
+    const parts = msg.text.split(" ")
+    const daysLimit = new Number(parts[parts.length - 1]);
+
+    const { events: userEvents } = await getEvents();
+
+    const pollsMatchingDays = filterEventsByDaysLimit(userEvents, daysLimit).map((event) => event.poll_message_id);
+
+    const unvoted = await unvotedByPollId(pollsMatchingDays);
+
+    const initialText = 'Favor responder à enquete: ';
+
+    Object.keys(unvoted).forEach(pollId => {
+        let currentOffset = initialText.length;
+        const userOffset = {};
+        
+        if(unvoted[pollId].length > 0){
+            const mentions = unvoted[pollId].map((user, index) => {
+                const mention = user.username ? `@${user.username} ` : `${user.name} ${user.surname ? user.surname : ''} `;
+                userOffset[user.id] = currentOffset;
+                currentOffset = currentOffset + mention.length + 1;
+                return mention;
+            });
+    
+            const entities = unvoted[pollId].reduce((acc, user) => {
+                if(user.username.length === 0){
+                    const mention = `${user.name} ${user.surname.length > 0 ? user.surname : ''}`;
+                    return [...acc,  {
+                        type: 'text_mention',
+                        user: user.surname.length > 0 ? {
+                            id: user.id,
+                            first_name: user.name,
+                            last_name: user.surname,
+                          } : {
+                            id: user.id,
+                            first_name: user.name
+                          },
+                        offset: userOffset[user.id],
+                        length: mention.length,
+                      }];
+                }
+                return acc;
+            }, []);
+    
+            sendMessage(bot, targetChat, `${initialText}${mentions}`, {
+                message_thread_id: targetThread,
+                reply_to_message_id: pollId,
+                entities: entities
+            });
+        }
+      });
+}
+
 const init = (bot, targetChat, targetThread) => {
     onReceiveText(bot, /\/atividade$/, (msg) => {
         startAtividade(bot, msg, false);
@@ -318,11 +391,7 @@ const init = (bot, targetChat, targetThread) => {
         events[chatId].state = EVENT_NAME;
     });
     
-    onReceiveText(bot, /\/calendario/, (msg) => {
-        const chatId = msg.chat.id;
-        events[chatId] = { state: CALENDAR_REQUEST };
-        generateCalendar(bot, chatId);
-    });
+    onReceiveText(bot, /\/calendario/, (msg) => onReceiveCalendar(bot, msg));
     
     onReceiveText(bot, /\/fecha_enquetes/, async (msg) => {
         const chatId = msg.chat.id;
@@ -371,10 +440,42 @@ const init = (bot, targetChat, targetThread) => {
     
         sendMessage(bot, chatId, "Enquetes vencidas finalizadas.");
     });
+
+    onReceiveText(bot, /\/cobrar_participacao/, (msg) => onReceiveAskParticipation(bot, targetChat, targetThread, msg));
+
+    onReceive(bot, 'poll_answer', (pollAnswer) => {
+        const userId = pollAnswer.user.id;
+        const pollId = pollAnswer.poll_id;
+    
+        console.log('pollAnswer', pollAnswer);
+        /*
+    pollAnswer {
+      poll_id: '4920718171029110XXX',
+      user: {
+        id: 103100XXX,
+        is_bot: false,
+        first_name: 'MyName',
+        last_name: 'MySurname',
+        username: 'myusername'
+      },
+      option_ids: [ 1 ]
+    }
+        */
+    
+        // Store the user's response in the database
+        /*userResponses[userId] = {
+            pollId,
+            choice: pollAnswer.option_ids[0], // Store the choice made by the user
+        };*/
+        upsertVotes(pollAnswer);
+    });
 }
 
 const onReceiveAnyText = (bot, msg, targetChat, targetThread) => {
     const chatId = msg.chat.id;
+
+    //console.log('msg text', msg);
+    //console.log('msg text', msg.entities[0]["user"]);
 
     if (events[chatId] && events[chatId].state === DATE) {
         receiveDateTime(bot, msg);
@@ -397,5 +498,7 @@ const onReceiveAnyText = (bot, msg, targetChat, targetThread) => {
 
 module.exports = {
     init,
-    onReceiveAnyText
+    onReceiveAnyText,
+    filterEventsByDaysLimit,
+    onReceiveAskParticipation
 };
