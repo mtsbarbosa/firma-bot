@@ -446,27 +446,6 @@ const init = (bot, targetChat, targetThread) => {
     onReceive(bot, 'poll_answer', (pollAnswer) => {
         const userId = pollAnswer.user.id;
         const pollId = pollAnswer.poll_id;
-    
-        console.log('pollAnswer', pollAnswer);
-        /*
-    pollAnswer {
-      poll_id: '4920718171029110XXX',
-      user: {
-        id: 103100XXX,
-        is_bot: false,
-        first_name: 'MyName',
-        last_name: 'MySurname',
-        username: 'myusername'
-      },
-      option_ids: [ 1 ]
-    }
-        */
-    
-        // Store the user's response in the database
-        /*userResponses[userId] = {
-            pollId,
-            choice: pollAnswer.option_ids[0], // Store the choice made by the user
-        };*/
         upsertVotes(pollAnswer);
     });
 }
