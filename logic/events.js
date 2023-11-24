@@ -35,7 +35,7 @@ const filterEventsByDaysLimit = (now, events, daysLimit) => {
     const minDate = now.minus({ days: daysLimit });
   
     const filteredEvents = events.filter(event => {
-      const eventDate = DateTime.fromFormat(event.date_time, 'yyyy-MM-dd HH:mm');
+      const eventDate = DateTime.fromFormat(event.date_time, 'yyyy-MM-dd HH:mm', { zone: 'utc' });
       return eventDate < minDate;
     });
   
