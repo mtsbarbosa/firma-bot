@@ -31,9 +31,9 @@ test('filterEventsByDaysLimit returns events older than two days', () => {
     DateTime.fromISO('2023-11-15T12:00:00.000Z')
   );
   const filteredEvents = filterEventsByDaysLimit(events, 2);
-  expect(filteredEvents).toEqual([
+  expect(filteredEvents.sort()).toEqual([
     { "event_name": "2", "date_time": "2023-11-12 10:00" },
-  ]);
+  ].sort());
 });
 
 test('filterEventsByDaysLimit returns an empty array when no events match the limit', () => {
