@@ -1,4 +1,4 @@
-const { sendMessage, sendPoll } = require('../../http_out/telegram');
+const { sendMessage, sendPoll, pinChatMessage } = require('../../http_out/telegram');
 const { getEvents, addEvents } = require('../../http_out/jsonstorage');
 const { clearMemory, updateEvents, inMemEvents, receiveEventName, startMultiple, addOptionName, addOptionDatetime, addOptionLocation, addOptionType } = require('../../controllers/events');
 const { generateUUID } = require('../../commons/uuid.js');
@@ -464,6 +464,21 @@ test('ok is sent', async () => {
         {}, 
         123, 
         'Você adicionou 2 opções para a enquete múltipla.\nCriando a enquete...');
+
+    expect(sendPoll).toHaveBeenCalledTimes(1);
+    expect(sendPoll).toHaveBeenCalledWith(
+      {}, 
+      1234, 
+      'Sua disponibilidade para \'Próximas Atividades\':',
+      [
+        'Ato 1, quarta-feira (13/09) às 15:00 - SBC - Bairro',
+        'Panfletagem em SA, quinta-feira (14/09) às 15:00 - SA - Centro',
+        'Ausente em todas'
+      ],
+      {"allows_multiple_answers": true, "is_anonymous": false, "message_thread_id": 12345});
+    
+    expect(pinChatMessage).toHaveBeenCalledTimes(1);
+    expect(pinChatMessage).toHaveBeenCalledWith({}, 1234, 45);
 
     expect(addEvents).toHaveBeenCalledTimes(1);
     expect(addEvents).toHaveBeenCalledWith([{"date_time": "2023-09-13 15:00", "event_name": "Ato 1", "id": "bbfe62ba-4e15-4775-9182-e06bce900010", "location": "SBC - Bairro", "poll_message_id": 45, "type": "Ato regional"}, {"date_time": "2023-09-14 15:00", "event_name": "Panfletagem em SA", "id": "bbfe62ba-4e15-4775-9182-e06bce900010", "location": "SA - Centro", "poll_message_id": 45, "type": "Panfletagem"}]);

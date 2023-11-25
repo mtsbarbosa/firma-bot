@@ -1,4 +1,4 @@
-const { sendMessage, unpinChatMessage, stopPoll, sendPoll } = require('../../http_out/telegram');
+const { sendMessage, unpinChatMessage, stopPoll, sendPoll, pinChatMessage } = require('../../http_out/telegram');
 const { getEvents, replaceEvents, addEvent } = require('../../http_out/jsonstorage');
 const { onFechaEnquetes, startEvent, startSimple, clearMemory, updateEvents, inMemEvents, receiveDateTime, receiveLocation, receiveType, receiveEventName } = require('../../controllers/events');
 const { generateUUID } = require('../../commons/uuid.js');
@@ -220,6 +220,17 @@ test('simple valid name and event is created', async () => {
   
     expect(sendMessage).toHaveBeenCalledTimes(1);
     expect(sendMessage).toHaveBeenCalledWith({}, 123, 'Nome do evento: Atividade 1\nCriando a enquete...');
+
+    expect(sendPoll).toHaveBeenCalledTimes(1);
+    expect(sendPoll).toHaveBeenCalledWith(
+      {}, 
+      1234, 
+      'Atividade 1, quarta-feira (13/09) às 15:00 - SCS - Centro',
+      ['Presente', 'Ausente'],
+      {"is_anonymous": false, "message_thread_id": 12345});
+    
+    expect(pinChatMessage).toHaveBeenCalledTimes(1);
+    expect(pinChatMessage).toHaveBeenCalledWith({}, 1234, 45);
 
     expect(addEvent).toHaveBeenCalledTimes(1);
     expect(addEvent).toHaveBeenCalledWith({
