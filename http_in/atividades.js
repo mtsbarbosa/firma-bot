@@ -41,7 +41,7 @@ const init = (bot, targetChat, targetThread) => {
     
     onReceiveText(bot, /\/calendario/, (msg) => onReceiveCalendar(bot, msg));
 
-    onReceiveText(bot, /limpa_memoria/, (msg) => {
+    onReceiveText(bot, /\/limpa_memoria/, (msg) => {
         clearMemory();
     });
     
