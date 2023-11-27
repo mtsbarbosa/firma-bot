@@ -2,6 +2,7 @@ require('dotenv').config();
 const { initializeBot, onReceive } = require('./http_out/telegram');
 const { init : initAtividades, onReceiveAnyText : onReceiveAnyAtividadesText } = require('./http_in/atividades');
 const { init : initMembros } = require('./http_in/membros');
+const { init : initDisponibilidades } = require('./http_in/disponibilidades');
 
 const botToken = process.env.BOT_TOKEN;
 const targetChat = process.env.POLL_TARGET_CHAT;
@@ -11,6 +12,7 @@ const init = (targetChat, targetThread) => {
     const bot = initializeBot(botToken);
     initAtividades(bot, targetChat, targetThread);
     initMembros(bot, targetChat, targetThread);
+    initDisponibilidades(bot, targetChat, targetThread);
 
     onReceive(bot, 'text', (msg) => {
         onReceiveAnyAtividadesText(bot, msg, targetChat, targetThread);

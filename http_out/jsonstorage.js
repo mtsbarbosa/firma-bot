@@ -55,6 +55,32 @@ const addEvent = async (event) => {
     }
 };
 
+const addAvailability = async (availability) => {
+    try {
+        const record = await getEvents();
+        
+        record.availabilities.push(availability);
+        const eventData = JSON.stringify(record);
+
+        const response = await fetch(`https://api.jsonstorage.net/v1/json/${binAccountId}/${binId}?apiKey=${apiKey}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: eventData,
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP Error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error("Error:", error);
+    }
+};
+
 const upsertParticipation = async (record) => {
     try {
         const eventData = JSON.stringify(record);
@@ -80,6 +106,7 @@ const upsertParticipation = async (record) => {
 
 const upsertVotes = async (vote) => {
     const record = await getParticipation();
+    
     if(!record.votes[vote.poll_id]){
         record.votes[vote.poll_id] = {};
     }
@@ -115,7 +142,9 @@ const addEvents = async (events) => {
 
 const replaceEvents = async (events) => {
     try {
-        const eventData = JSON.stringify({events});
+        const record = await getEvents();
+        record.events = events;
+        const eventData = JSON.stringify(record);
 
         const response = await fetch(`https://api.jsonstorage.net/v1/json/${binAccountId}/${binId}?apiKey=${apiKey}`, {
             method: "PUT",
@@ -123,6 +152,31 @@ const replaceEvents = async (events) => {
                 "Content-Type": "application/json"
             },
             body: eventData,
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP Error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error("Error:", error);
+    }
+};
+
+const replaceAvailabilities = async (availabilities) => {
+    try {
+        const record = await getEvents();
+        record.availabilities = availabilities;
+        const availabilitiesData = JSON.stringify(record);
+
+        const response = await fetch(`https://api.jsonstorage.net/v1/json/${binAccountId}/${binId}?apiKey=${apiKey}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: availabilitiesData,
         });
 
         if (!response.ok) {
@@ -161,5 +215,7 @@ module.exports = {
     getParticipation,
     upsertMembers,
     upsertVotes,
-    removeMembers
+    removeMembers,
+    addAvailability,
+    replaceAvailabilities
 }

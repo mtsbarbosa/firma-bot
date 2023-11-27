@@ -31,6 +31,16 @@ const markOutdatedEventsGroupedByPollId = (now, groupedEvents) => {
     return mappedEvents;
 };
 
+const markOutdatedEvents = (now, events) => {
+    const mappedEvents = events.map((event) => {
+        if (!event.date_time) return event;
+        const eventDate = DateTime.fromFormat(event.date_time, 'yyyy-MM-dd HH:mm');
+        event.outdated = eventDate <= now;
+        return event;
+    });
+    return mappedEvents;
+};
+
 const filterEventsByDaysLimit = (now, events, daysLimit) => {
     const minDate = now.minus({ days: daysLimit });
   
@@ -46,5 +56,6 @@ module.exports = {
     groupByPollMessageId,
     filterByPollMessageUndefined,
     markOutdatedEventsGroupedByPollId,
+    markOutdatedEvents,
     filterEventsByDaysLimit
 }

@@ -29,11 +29,17 @@ const unvotedByPollId = async (pollIds) => {
 };
 
 const askParticipation = async (bot, targetChat, targetThread, daysLimit) => {
-    const { events: userEvents } = await getEvents();
+    const { events: userEvents, availabilities } = await getEvents();
 
-    const pollsMatchingDays = filterEventsByDaysLimit(DateTime.now(), userEvents, daysLimit).map((event) => event.poll_message_id);
+    const pollsMatchingDays = [...filterEventsByDaysLimit(DateTime.now(), userEvents, daysLimit).map((event) => [event.poll_id, event.poll_message_id]),
+                               ...filterEventsByDaysLimit(DateTime.now(), availabilities, daysLimit).map((event) => [event.poll_id, event.poll_message_id])]
 
-    const unvoted = await unvotedByPollId(pollsMatchingDays);
+    const pollMap = pollsMatchingDays.reduce((acc, [pollId, messageId]) => {
+      acc[pollId] = messageId;
+      return acc;
+    }, {});
+
+    const unvoted = await unvotedByPollId(pollsMatchingDays.map((pair) => pair[0]));
 
     const initialText = 'Favor responder à enquete: ';
 
@@ -71,7 +77,7 @@ const askParticipation = async (bot, targetChat, targetThread, daysLimit) => {
     
             sendMessage(bot, targetChat, `${initialText}${mentions}`, {
                 message_thread_id: targetThread,
-                reply_to_message_id: pollId,
+                reply_to_message_id: pollMap[pollId],
                 entities: entities
             });
         }

@@ -7,7 +7,7 @@ Um bot para facilitar a administração e organização de coletivos e organiza�
 - Logado nela, faça um fork desse repositório `firma-bot`
 - Crie uma conta para sua organização na página [json storage](https://www.jsonstorage.net/)
   - Nela, no botão `+ Create`, crie dois Items: `firma-events, firma-events-staging`
-  - O conteúdo (content) inicial deles deve ser `{"events":[]}`, adicione esse conteúdo e salve.
+  - O conteúdo (content) inicial deles deve ser `{"events":[],"availabilities":[]}`, adicione esse conteúdo e salve.
   - Crie mais dois items `firma-participation, firma-participation-staging`
   - O conteúdo (content) inicial deles deve ser `{"votes":{},"members":[]}`, adicione-o e salve.
   - No menu esquerdo, vá em Api Keys e clique em Create

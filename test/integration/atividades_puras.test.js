@@ -21,7 +21,7 @@ beforeEach(() => {
   clearMemory({}, 123);
   jest.clearAllMocks();
   getEvents.mockImplementation(() => Promise.resolve(
-    {"events":[]}));
+    {"events":[], "availabilities":[{"id":"7e974c87-60e9-4bfa-8418-8a1b38b0ccca","name":"Próximas atividades","dates":["2023-11-30 10:00","2023-11-30 14:00"],"poll_message_id":141}]}));
 });
 
 test('simple valid name and pure event is created', async () => {

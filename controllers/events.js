@@ -4,6 +4,7 @@ const { isValidDateTimeFormat } = require('../commons/date');
 const { replaceEvents, getEvents, upsertVotes, addEvent, addEvents } = require("../http_out/jsonstorage");
 const { sendMessage, unpinChatMessage, stopPoll, pinChatMessage, sendPoll } = require("../http_out/telegram");
 const { groupByPollMessageId, filterByPollMessageUndefined, markOutdatedEventsGroupedByPollId } = require("../logic/events");
+const { closeAvailabilities } = require("./availability");
 
 let events = {};
 
@@ -226,27 +227,28 @@ const createSimpleEvent = async (bot, chatId, targetChat, targetThread) => {
     const poll_question = `${events[chatId].event_name}, ${dateTime} - ${events[chatId].location}`;
     const options = ["Presente", "Ausente"];
 
-    const addAtividade = (pollId) => {
+    const addAtividade = (pollId, pollMessageId) => {
         addEvent({
             id: generateUUID(),
             event_name: events[chatId].event_name, 
             date_time: events[chatId].date_time,
             location: events[chatId].location,
             type: events[chatId].type,
-            poll_message_id: pollId
+            poll_message_id: pollMessageId,
+            poll_id: pollId
         });
         delete events[chatId];
     };
 
     if(events[chatId].pure){
-        return addAtividade(undefined);
+        return addAtividade(undefined, undefined);
     }else{
         try{
             const poll = await sendPoll(bot, targetChat, poll_question, options,
                 { is_anonymous: false, 
                 message_thread_id: targetThread });
             return await Promise.all([
-                addAtividade(poll.message_id),
+                addAtividade(poll.poll.id, poll.message_id),
                 pinChatMessage(bot, targetChat, poll.message_id)]);
         }catch(e){
             console.log('error polling => ', e)
@@ -272,9 +274,10 @@ const createMultiDateEvent = async (bot, chatId, targetChat, targetThread) => {
     });
     options.push('Ausente em todas');
 
-    const addAtividades = (pollId) => {
+    const addAtividades = (pollId, pollMessageId) => {
         const newEventsComplete = newEvents.map((event) => {
-            event.poll_message_id = pollId;
+            event.poll_message_id = pollMessageId;
+            event.poll_id = pollId;
             event.id = generateUUID();
             return event;
         });
@@ -291,7 +294,7 @@ const createMultiDateEvent = async (bot, chatId, targetChat, targetThread) => {
                  allows_multiple_answers: true,
                  message_thread_id: targetThread});
             return await Promise.all([
-                addAtividades(poll.message_id),
+                addAtividades(poll.poll.id, poll.message_id),
                 pinChatMessage(bot, targetChat, poll.message_id)]);
         }catch(e){
             console.log('error polling => ', e);
@@ -321,11 +324,8 @@ const nextState = (bot, msg, targetChat, targetThread) => {
     }
 }
 
-const onFechaEnquetes = async (bot, targetChat, targetThread, msg) => {
-    const chatId = msg.chat.id;
+const closeEvents = async (bot, targetChat, targetThread, fetchedEvents) => {
     const currentDate = DateTime.now();
-
-    const { events: fetchedEvents } = await getEvents();
     const groupedEvents = groupByPollMessageId(fetchedEvents);
     const undefinedPollEvents = filterByPollMessageUndefined(fetchedEvents);
 
@@ -360,8 +360,16 @@ const onFechaEnquetes = async (bot, targetChat, targetThread, msg) => {
 
     // Replace the events
     replaceEvents(updatedEvents);
+};
 
-    sendMessage(bot, chatId, "Enquetes vencidas finalizadas.");
+const onFechaEnquetes = async (bot, targetChat, targetThread, msg) => {
+    const chatId = msg.chat.id;
+
+    const { events: fetchedEvents, availabilities } = await getEvents();
+    closeEvents(bot, targetChat, targetThread, fetchedEvents);
+    closeAvailabilities(bot, targetChat, targetThread, availabilities);
+
+    return sendMessage(bot, chatId, "Enquetes vencidas finalizadas.");
 }
 
 module.exports = {

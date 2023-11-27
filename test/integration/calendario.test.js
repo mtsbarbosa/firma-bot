@@ -14,7 +14,7 @@ jest.mock('../../http_out/telegram.js', () => {
 beforeEach(() => {
   jest.clearAllMocks();
   getEvents.mockImplementation(() => Promise.resolve(
-    {"events":[]}));
+    {"events":[], "availabilities":[{"id":"7e974c87-60e9-4bfa-8418-8a1b38b0ccca","name":"Próximas atividades","dates":["2023-11-30 10:00","2023-11-30 14:00"],"poll_message_id":141}]}));
 });
 
 test('onReceiveCalendar with events', async () => {
@@ -26,7 +26,8 @@ test('onReceiveCalendar with events', async () => {
         {"event_name":"ato 2","date_time":"2023-11-12 15:00","location":"São Paulo - Bairro","type":"Ato não regional"},
         {"poll_message_id":79,"event_name":"reuniao","date_time":"2023-09-13 15:00","location":"Diadema - Centro","type":"Evento externo","outdated":true},
         {"poll_message_id":79,"event_name":"ato","date_time":"2023-11-13 15:00","location":"RGS - Bairro","type":"Ato regional","outdated":false},
-        {"id":"c6f25ea1-ef2e-409a-ad76-0ea0ca224496","event_name":"ato 3","date_time":"2023-09-14 15:00","location":"Ribeirão Pires - Bairro","type":"Ato regional","poll_message_id":81}]}));
+        {"id":"c6f25ea1-ef2e-409a-ad76-0ea0ca224496","event_name":"ato 3","date_time":"2023-09-14 15:00","location":"Ribeirão Pires - Bairro","type":"Ato regional","poll_message_id":81}], 
+     "availabilities":[]}));
 
   const mockMsg = {
     chat: {

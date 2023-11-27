@@ -3,7 +3,8 @@ const {
   groupByPollMessageId, 
   filterByPollMessageUndefined,
   markOutdatedEventsGroupedByPollId,
-  filterEventsByDaysLimit
+  filterEventsByDaysLimit,
+  markOutdatedEvents
 } = require("../../logic/events");
 
 const events = [
@@ -70,6 +71,28 @@ test('filterByPollMessageUndefined groups', () => {
       DateTime.fromISO('2023-11-15T12:00:00.000Z'),
       {});
     expect(result).toEqual([]);
+  });
+
+  test('markOutdatedEvents when there are events', () => {
+    const result = markOutdatedEvents(
+      DateTime.fromISO('2023-11-15T12:00:00.000Z'),
+      [
+        { "event_name": "1", "date_time": "2023-11-16 18:30", "poll_message_id": 79},
+        { "event_name": "2", "date_time": "2023-11-12 09:45", "poll_message_id": 79}]);
+    expect(result).toEqual(
+      [
+        { "event_name": "1", "date_time": "2023-11-16 18:30", "poll_message_id": 79, "outdated": false},
+        { "event_name": "2", "date_time": "2023-11-12 09:45", "poll_message_id": 79, "outdated": true}]
+    );
+  });
+
+  test('markOutdatedEvents when there are no events', () => {
+    const result = markOutdatedEvents(
+      DateTime.fromISO('2023-11-15T12:00:00.000Z'),
+      []);
+    expect(result).toEqual(
+      []
+    );
   });
 
   test('filterEventsByDaysLimit returns events older than two days', () => {

@@ -25,7 +25,7 @@ beforeEach(() => {
   clearMemory({}, 123);
   jest.clearAllMocks();
   getEvents.mockImplementation(() => Promise.resolve(
-    {"events":[]}));
+    {"events":[], "availabilities":[{"id":"7e974c87-60e9-4bfa-8418-8a1b38b0ccca","name":"Próximas atividades","dates":["2023-11-30 10:00","2023-11-30 14:00"],"poll_message_id":141}]}));
 });
 
 test('startMultiple', async () => {
@@ -452,7 +452,7 @@ test('ok is sent', async () => {
         text: 'ok'
     };
 
-    sendPoll.mockImplementation(() => Promise.resolve({"message_id": 45}));
+    sendPoll.mockImplementation(() => Promise.resolve({"poll": {"id": "5125448558970928179"}, "message_id": 45}));
     generateUUID.mockImplementation(() => "bbfe62ba-4e15-4775-9182-e06bce900010");
 
     await addOptionName({}, mockMsg, 1234, 12345);
@@ -481,5 +481,19 @@ test('ok is sent', async () => {
     expect(pinChatMessage).toHaveBeenCalledWith({}, 1234, 45);
 
     expect(addEvents).toHaveBeenCalledTimes(1);
-    expect(addEvents).toHaveBeenCalledWith([{"date_time": "2023-09-13 15:00", "event_name": "Ato 1", "id": "bbfe62ba-4e15-4775-9182-e06bce900010", "location": "SBC - Bairro", "poll_message_id": 45, "type": "Ato regional"}, {"date_time": "2023-09-14 15:00", "event_name": "Panfletagem em SA", "id": "bbfe62ba-4e15-4775-9182-e06bce900010", "location": "SA - Centro", "poll_message_id": 45, "type": "Panfletagem"}]);
+    expect(addEvents).toHaveBeenCalledWith([{
+        "date_time": "2023-09-13 15:00", 
+        "event_name": "Ato 1", 
+        "id": "bbfe62ba-4e15-4775-9182-e06bce900010", 
+        "location": "SBC - Bairro",
+        "poll_id": "5125448558970928179",
+        "poll_message_id": 45, 
+        "type": "Ato regional"}, 
+        {"date_time": "2023-09-14 15:00", 
+        "event_name": "Panfletagem em SA", 
+        "id": "bbfe62ba-4e15-4775-9182-e06bce900010", 
+        "location": "SA - Centro",
+        "poll_id": "5125448558970928179",
+        "poll_message_id": 45, 
+        "type": "Panfletagem"}]);
 });
