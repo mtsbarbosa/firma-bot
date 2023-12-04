@@ -1,10 +1,11 @@
 const { DateTime } = require("luxon");
 const { generateUUID } = require('../commons/uuid');
 const { isValidDateTimeFormat } = require('../commons/date');
-const { replaceEvents, getEvents, upsertVotes, addEvent, addEvents } = require("../http_out/jsonstorage");
+const { replaceEvents, getEvents, upsertVote, addEvent, addEvents } = require("../http_out/jsonstorage");
 const { sendMessage, unpinChatMessage, stopPoll, pinChatMessage, sendPoll } = require("../http_out/telegram");
 const { groupByPollMessageId, filterByPollMessageUndefined, markOutdatedEventsGroupedByPollId } = require("../logic/events");
 const { closeAvailabilities } = require("./availability");
+const { removeVotesByKeys } = require("./participation");
 
 let events = {};
 
@@ -49,7 +50,7 @@ const clearMemory = (bot, chatId) => {
 }
 
 const onPollAnswer = (pollAnswer) => {
-    upsertVotes(pollAnswer);
+    upsertVote(pollAnswer);
 }
 
 const createLocationKeyboard = {
@@ -330,12 +331,15 @@ const closeEvents = async (bot, targetChat, targetThread, fetchedEvents) => {
     const undefinedPollEvents = filterByPollMessageUndefined(fetchedEvents);
 
     const markedGroupedEvents = markOutdatedEventsGroupedByPollId(currentDate, groupedEvents);
+    let outdatedPolls = new Set([]);
 
     markedGroupedEvents.forEach(([pollId, events]) => {
         const allEventsOutdated = events.every(event => event.outdated);
         if(allEventsOutdated){
             stopPoll(bot, targetChat, pollId, { message_thread_id: targetThread });
             unpinChatMessage(bot, targetChat, pollId);
+            if(events[0].poll_id)
+                outdatedPolls.add(events[0].poll_id);
         }
     });
 
@@ -360,6 +364,7 @@ const closeEvents = async (bot, targetChat, targetThread, fetchedEvents) => {
 
     // Replace the events
     replaceEvents(updatedEvents);
+    removeVotesByKeys(outdatedPolls);
 };
 
 const onFechaEnquetes = async (bot, targetChat, targetThread, msg) => {

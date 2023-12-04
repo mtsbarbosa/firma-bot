@@ -104,7 +104,7 @@ const upsertParticipation = async (record) => {
     }
 };
 
-const upsertVotes = async (vote) => {
+const upsertVote = async (vote) => {
     const record = await getParticipation();
     
     if(!record.votes[vote.poll_id]){
@@ -213,8 +213,9 @@ module.exports = {
     getEvents,
     replaceEvents,
     getParticipation,
+    upsertParticipation,
     upsertMembers,
-    upsertVotes,
+    upsertVote,
     removeMembers,
     addAvailability,
     replaceAvailabilities

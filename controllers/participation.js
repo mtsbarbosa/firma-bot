@@ -1,5 +1,5 @@
 const { DateTime } = require("luxon");
-const { getParticipation, getEvents } = require("../http_out/jsonstorage");
+const { getParticipation, getEvents, upsertParticipation } = require("../http_out/jsonstorage");
 const { filterEventsByDaysLimit } = require("../logic/events");
 const { sendMessage } = require("../http_out/telegram");
 
@@ -84,7 +84,14 @@ const askParticipation = async (bot, targetChat, targetThread, daysLimit) => {
       });
 }
 
+const removeVotesByKeys = async (keys) => {
+  const participation = await getParticipation();
+  keys.forEach((key) => delete participation.votes[key]);
+  return upsertParticipation(participation);
+}
+
 module.exports = {
     unvotedByPollId,
-    askParticipation
+    askParticipation,
+    removeVotesByKeys
 }
