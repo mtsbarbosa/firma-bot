@@ -28,10 +28,10 @@ test('addMembers should add a single complete member', async () => {
       members: []
     }));
   
-    await addMembers({}, mockMsg, [null,'user1:John:Doe:123']);
+    await addMembers({}, mockMsg, [null,'user1:John:Doe:123:sa']);
 
     expect(sendMessage).toHaveBeenCalledTimes(1);
-    expect(upsertMembers).toHaveBeenCalledWith(['user1:John:Doe:123']);
+    expect(upsertMembers).toHaveBeenCalledWith(['user1:John:Doe:123:sa']);
   });
 
   test('addMembers should not add when weird format', async () => {
@@ -62,7 +62,7 @@ test('addMembers should add a single complete member', async () => {
       members: []
     }));
   
-    await addMembers({}, mockMsg, [null,':test::']);
+    await addMembers({}, mockMsg, [null,':test::sa']);
 
     expect(sendMessage).toHaveBeenCalledTimes(1);
     expect(upsertMembers).toHaveBeenCalledTimes(0);
@@ -79,13 +79,13 @@ test('addMembers should add a single complete member', async () => {
       members: []
     }));
   
-    await addMembers({}, mockMsg, [null,':::123']);
+    await addMembers({}, mockMsg, [null,':::123:sa']);
 
     expect(sendMessage).toHaveBeenCalledTimes(1);
     expect(upsertMembers).toHaveBeenCalledTimes(0);
   });
 
-  test('addMembers should add a single complete member', async () => {
+  test('addMembers should not add when no city is provided', async () => {
     const mockMsg = {
       chat: {
         id: 123
@@ -96,10 +96,10 @@ test('addMembers should add a single complete member', async () => {
       members: []
     }));
   
-    await addMembers({}, mockMsg, [null,'user1:John:Doe:123']);
+    await addMembers({}, mockMsg, [null,':test::123:']);
 
     expect(sendMessage).toHaveBeenCalledTimes(1);
-    expect(upsertMembers).toHaveBeenCalledWith(['user1:John:Doe:123']);
+    expect(upsertMembers).toHaveBeenCalledTimes(0);
   });
 
 test('listMembers should send a formatted list of members', async () => {
@@ -110,14 +110,14 @@ test('listMembers should send a formatted list of members', async () => {
   };
 
   getParticipation.mockImplementation(() => Promise.resolve({
-    members: ['user1:John:Doe:123', 'user2:Jane:Smith:456']
+    members: ['user1:John:Doe:123:sa', 'user2:Jane:Smith:456:rp']
   }));
 
   await listMembers({}, mockMsg);
   
   expect(getParticipation).toHaveBeenCalledTimes(1);
   expect(sendMessage).toHaveBeenCalledTimes(1);
-  expect(sendMessage).toHaveBeenCalledWith({}, 123, 'Lista de membros:\nUsername: user1\nNome: John\nSobrenome: Doe\nID: 123\n\nUsername: user2\nNome: Jane\nSobrenome: Smith\nID: 456\n\n');
+  expect(sendMessage).toHaveBeenCalledWith({}, 123, 'Lista de membros:\nUsername: user1\nNome: John\nSobrenome: Doe\nID: 123\nCidade: Santo André\n\nUsername: user2\nNome: Jane\nSobrenome: Smith\nID: 456\nCidade: Ribeirão Pires\n\n');
 });
 
 test('listMembers should send a single member', async () => {
@@ -128,14 +128,14 @@ test('listMembers should send a single member', async () => {
   };
 
   getParticipation.mockImplementation(() => Promise.resolve({
-    members: ['user1:John:Doe:123']
+    members: ['user1:John:Doe:123:sbc']
   }));
 
   await listMembers({}, mockMsg);
   
   expect(getParticipation).toHaveBeenCalledTimes(1);
   expect(sendMessage).toHaveBeenCalledTimes(1);
-  expect(sendMessage).toHaveBeenCalledWith({}, 123, 'Lista de membros:\nUsername: user1\nNome: John\nSobrenome: Doe\nID: 123\n\n');
+  expect(sendMessage).toHaveBeenCalledWith({}, 123, 'Lista de membros:\nUsername: user1\nNome: John\nSobrenome: Doe\nID: 123\nCidade: São Bernardo\n\n');
 });
 
 test('listMembers with no member', async () => {
