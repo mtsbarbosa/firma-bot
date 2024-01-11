@@ -9,7 +9,7 @@ jest.mock('../../http_out/telegram.js');
 
 jest.mock('luxon', () => ({
     DateTime: {
-      now: jest.fn(() => jest.requireActual('luxon').DateTime.fromISO('2023-11-15T12:00:00.000Z')),
+      now: jest.fn(() => jest.requireActual('luxon').DateTime.fromISO('2023-11-15T12:00:00.000Z', { zone: 'utc' })),
       fromFormat: jest.fn((a, b) => jest.requireActual('luxon').DateTime.fromFormat(a, b))
     },
 }));
@@ -241,7 +241,7 @@ test('simple valid name and event is created', async () => {
         "poll_id": "5125448558970928179",
         "poll_message_id": 45,
         "type": "Panfletagem",
-        "created_at": "2023-11-15 09:00"
+        "created_at": "2023-11-15 12:00"
     });
 });
 

@@ -9,7 +9,7 @@ jest.mock('../../http_out/telegram.js');
 
 jest.mock('luxon', () => ({
     DateTime: {
-      now: jest.fn(() => jest.requireActual('luxon').DateTime.fromISO('2023-11-15T12:00:00.000Z')),
+      now: jest.fn(() => jest.requireActual('luxon').DateTime.fromISO('2023-11-15T12:00:00.000Z', { zone: 'utc' })),
       fromFormat: jest.fn((a, b) => jest.requireActual('luxon').DateTime.fromFormat(a, b))
     },
 }));
@@ -58,7 +58,7 @@ test('simple valid name and pure event is created', async () => {
         "id": "bbfe62ba-4e15-4775-9182-e06bce900010",
         "location": "SCS - Centro",
         "type": "Panfletagem",
-        "created_at": "2023-11-15 09:00"
+        "created_at": "2023-11-15 12:00"
     });
 });
 
@@ -96,5 +96,5 @@ test('ok is sent for multiple pure event', async () => {
     expect(pinChatMessage).toHaveBeenCalledTimes(0);
 
     expect(addEvents).toHaveBeenCalledTimes(1);
-    expect(addEvents).toHaveBeenCalledWith([{"date_time": "2023-09-13 15:00", "event_name": "Ato 1", "id": "bbfe62ba-4e15-4775-9182-e06bce900010", "location": "SBC - Bairro", "type": "Ato regional", "created_at": "2023-11-15 09:00"}, {"date_time": "2023-09-14 15:00", "event_name": "Panfletagem em SA", "id": "bbfe62ba-4e15-4775-9182-e06bce900010", "location": "SA - Centro", "type": "Panfletagem", "created_at": "2023-11-15 09:00"}]);
+    expect(addEvents).toHaveBeenCalledWith([{"date_time": "2023-09-13 15:00", "event_name": "Ato 1", "id": "bbfe62ba-4e15-4775-9182-e06bce900010", "location": "SBC - Bairro", "type": "Ato regional", "created_at": "2023-11-15 12:00"}, {"date_time": "2023-09-14 15:00", "event_name": "Panfletagem em SA", "id": "bbfe62ba-4e15-4775-9182-e06bce900010", "location": "SA - Centro", "type": "Panfletagem", "created_at": "2023-11-15 12:00"}]);
 });
