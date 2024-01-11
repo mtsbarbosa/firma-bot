@@ -43,12 +43,12 @@ const markOutdatedEvents = (now, events) => {
 
 const filterEventsByDaysLimit = (now, events, daysLimit) => {
     const minDate = now.minus({ days: daysLimit });
-    console.log('minDate', minDate);
+    //console.log('minDate', minDate);
     const filteredEvents = events.filter(event => {
-      const eventDate = DateTime.fromFormat(event.date_time, 'yyyy-MM-dd HH:mm', { zone: 'utc' });
-      console.log('eventDate', eventDate);
-      console.log('dates compare', eventDate < minDate);
-      return eventDate < minDate;
+      const createdAt = DateTime.fromFormat(event.created_at, 'yyyy-MM-dd HH:mm', { zone: 'utc' });
+      //console.log('createdAt', createdAt);
+      //console.log('dates compare', createdAt < minDate);
+      return createdAt < minDate;
     });
   
     return filteredEvents;

@@ -33,14 +33,14 @@ const askParticipation = async (bot, targetChat, targetThread, daysLimit) => {
 
     const pollsMatchingDays = [...filterEventsByDaysLimit(DateTime.now(), userEvents, daysLimit).map((event) => [event.poll_id, event.poll_message_id]),
                                ...filterEventsByDaysLimit(DateTime.now(), availabilities, daysLimit).map((event) => [event.poll_id, event.poll_message_id])]
-    console.log('pollsMatchingDays', pollsMatchingDays);
+    //console.log('pollsMatchingDays', pollsMatchingDays);
     const pollMap = pollsMatchingDays.reduce((acc, [pollId, messageId]) => {
       acc[pollId] = messageId;
       return acc;
     }, {});
-    console.log('pollMap', pollMap);
+    //console.log('pollMap', pollMap);
     const unvoted = await unvotedByPollId(pollsMatchingDays.map((pair) => pair[0]));
-    console.log('unvoted', unvoted);
+    //console.log('unvoted', unvoted);
     const initialText = 'Favor responder à enquete: ';
 
     Object.keys(unvoted).forEach(pollId => {

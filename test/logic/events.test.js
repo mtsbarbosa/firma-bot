@@ -97,29 +97,29 @@ test('filterByPollMessageUndefined groups', () => {
 
   test('filterEventsByDaysLimit returns events older than two days', () => {
     const filteredEvents = filterEventsByDaysLimit(DateTime.fromISO('2023-11-15T12:00:00.000Z', { zone: 'utc' }), [
-      { "event_name": "1", "date_time": "2023-11-14 18:30" },
-      { "event_name": "2", "date_time": "2023-11-12 10:00" },
-      { "event_name": "3", "date_time": "2023-11-13 12:15" },
+      { "event_name": "1", "created_at": "2023-11-14 18:30" },
+      { "event_name": "2", "created_at": "2023-11-12 10:00" },
+      { "event_name": "3", "created_at": "2023-11-13 12:15" },
     ], 2);
     expect(filteredEvents.sort()).toEqual([
-      { "event_name": "2", "date_time": "2023-11-12 10:00" },
+      { "event_name": "2", "created_at": "2023-11-12 10:00" },
     ].sort());
   });
   
   test('filterEventsByDaysLimit returns an empty array when no events match the limit', () => {
     const filteredEvents = filterEventsByDaysLimit(DateTime.fromISO('2023-11-15T12:00:00.000Z'), [
-      { "event_name": "1", "date_time": "2023-11-14 18:30" },
-      { "event_name": "2", "date_time": "2023-11-12 10:00" },
-      { "event_name": "3", "date_time": "2023-11-13 09:15" },
+      { "event_name": "1", "created_at": "2023-11-14 18:30" },
+      { "event_name": "2", "created_at": "2023-11-12 10:00" },
+      { "event_name": "3", "created_at": "2023-11-13 09:15" },
     ], 10);
     expect(filteredEvents).toEqual([]);
   });
   
   test('filterEventsByDaysLimit returns all events when limit is zero', () => {
     const events = [
-      { "event_name": "1", "date_time": "2023-11-14 18:30" },
-      { "event_name": "2", "date_time": "2023-11-12 10:00" },
-      { "event_name": "3", "date_time": "2023-11-13 09:15" },
+      { "event_name": "1", "created_at": "2023-11-14 18:30" },
+      { "event_name": "2", "created_at": "2023-11-12 10:00" },
+      { "event_name": "3", "created_at": "2023-11-13 09:15" },
     ];
     const filteredEvents = filterEventsByDaysLimit(DateTime.fromISO('2023-11-15T12:00:00.000Z'), events, 0);
     expect(filteredEvents).toEqual(events);

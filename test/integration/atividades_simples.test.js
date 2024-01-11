@@ -240,7 +240,8 @@ test('simple valid name and event is created', async () => {
         "location": "SCS - Centro",
         "poll_id": "5125448558970928179",
         "poll_message_id": 45,
-        "type": "Panfletagem"
+        "type": "Panfletagem",
+        "created_at": "2023-11-15 09:00"
     });
 });
 

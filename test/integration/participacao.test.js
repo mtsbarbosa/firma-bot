@@ -28,9 +28,10 @@ beforeEach(() => {
     {"events":[
       {
         "event_name":"ato 2",
-        "date_time":"2023-11-12 15:00",
+        "date_time":"2023-11-15 15:00",
         "location":"São Paulo - Bairro",
-        "type":"Ato não regional"
+        "type":"Ato não regional",
+        "created_at": "2023-11-12 15:00"
       },
       {
         "poll_id": 79800,
@@ -39,16 +40,18 @@ beforeEach(() => {
         "date_time":"2023-09-13 15:00",
         "location":"Diadema - Centro",
         "type":"Evento externo",
-        "outdated":true
+        "outdated":true,
+        "created_at": "2023-09-16 15:00"
       },
       {
         "poll_id": 79800,
         "poll_message_id":79,
         "event_name":"ato",
-        "date_time":"2023-11-13 15:00",
+        "date_time":"2023-11-16 15:00",
         "location":"RGS - Bairro",
         "type":"Ato regional",
-        "outdated":false
+        "outdated":false,
+        "created_at": "2023-11-13 15:00"
       },
       {
         "id":"c6f25ea1-ef2e-409a-ad76-0ea0ca224496",
@@ -57,7 +60,8 @@ beforeEach(() => {
         "location":"Ribeirão Pires - Bairro",
         "type":"Ato regional",
         "poll_id": 81800,
-        "poll_message_id":81
+        "poll_message_id":81,
+        "created_at": "2023-09-17 15:00"
       }],
      "availabilities":[]}));
 });
@@ -210,17 +214,19 @@ test('onReceiveAskParticipation no vote', async () => {
       "poll_id": 79800,
       "poll_message_id":79,
       "event_name":"reuniao",
-      "date_time":"2023-09-13 15:00",
+      "date_time":"2023-09-16 15:00",
       "location":"Diadema - Centro",
       "type":"Evento externo",
-      "outdated":true}],
+      "outdated":true,
+      "created_at": "2023-09-13 15:00"}],
     "availabilities":[{
       "id":"7e974c87-60e9-4bfa-8418-8a1b38b0ccca",
-      "date_time": "2023-11-12 12:00",
+      "date_time": "2023-11-15 12:00",
       "name":"Próximas atividades",
       "dates":["2023-11-30 10:00","2023-11-30 14:00"],
       "poll_id": 141800,
-      "poll_message_id": 141}]}));
+      "poll_message_id": 141,
+      "created_at": "2023-11-12 12:00"}]}));
 
   const mockMsg = {
     chat: {
@@ -273,11 +279,12 @@ test('onReceiveAskParticipation single availability voter', async () => {
   getEvents.mockImplementation(() => Promise.resolve({"events":[],
                                                       "availabilities":[{
                                                         "id":"7e974c87-60e9-4bfa-8418-8a1b38b0ccca",
-                                                        "date_time": "2023-11-12 12:00",
+                                                        "date_time": "2023-11-15 12:00",
                                                         "name":"Próximas atividades",
                                                         "dates":["2023-11-30 10:00","2023-11-30 14:00"],
                                                         "poll_id": 141800,
-                                                        "poll_message_id":141}]}));
+                                                        "poll_message_id":141,
+                                                        "created_at": "2023-11-12 12:00"}]}));
 
   const mockMsg = {
     chat: {

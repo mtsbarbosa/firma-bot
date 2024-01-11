@@ -57,7 +57,8 @@ test('simple valid name and pure event is created', async () => {
         "event_name": "Atividade 1",
         "id": "bbfe62ba-4e15-4775-9182-e06bce900010",
         "location": "SCS - Centro",
-        "type": "Panfletagem"
+        "type": "Panfletagem",
+        "created_at": "2023-11-15 09:00"
     });
 });
 
@@ -95,5 +96,5 @@ test('ok is sent for multiple pure event', async () => {
     expect(pinChatMessage).toHaveBeenCalledTimes(0);
 
     expect(addEvents).toHaveBeenCalledTimes(1);
-    expect(addEvents).toHaveBeenCalledWith([{"date_time": "2023-09-13 15:00", "event_name": "Ato 1", "id": "bbfe62ba-4e15-4775-9182-e06bce900010", "location": "SBC - Bairro", "type": "Ato regional"}, {"date_time": "2023-09-14 15:00", "event_name": "Panfletagem em SA", "id": "bbfe62ba-4e15-4775-9182-e06bce900010", "location": "SA - Centro", "type": "Panfletagem"}]);
+    expect(addEvents).toHaveBeenCalledWith([{"date_time": "2023-09-13 15:00", "event_name": "Ato 1", "id": "bbfe62ba-4e15-4775-9182-e06bce900010", "location": "SBC - Bairro", "type": "Ato regional", "created_at": "2023-11-15 09:00"}, {"date_time": "2023-09-14 15:00", "event_name": "Panfletagem em SA", "id": "bbfe62ba-4e15-4775-9182-e06bce900010", "location": "SA - Centro", "type": "Panfletagem", "created_at": "2023-11-15 09:00"}]);
 });

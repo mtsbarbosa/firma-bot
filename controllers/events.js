@@ -236,7 +236,8 @@ const createSimpleEvent = async (bot, chatId, targetChat, targetThread) => {
             location: events[chatId].location,
             type: events[chatId].type,
             poll_message_id: pollMessageId,
-            poll_id: pollId
+            poll_id: pollId,
+            created_at: DateTime.now().toFormat('yyyy-MM-dd HH:mm')
         });
         delete events[chatId];
     };
@@ -274,12 +275,14 @@ const createMultiDateEvent = async (bot, chatId, targetChat, targetThread) => {
         return `${option}, ${dateTimeFormatted} - ${location}`;
     });
     options.push('Ausente em todas');
-
+    
+    const currentDate = DateTime.now().toFormat('yyyy-MM-dd HH:mm');
     const addAtividades = (pollId, pollMessageId) => {
         const newEventsComplete = newEvents.map((event) => {
             event.poll_message_id = pollMessageId;
             event.poll_id = pollId;
             event.id = generateUUID();
+            event.created_at = currentDate;
             return event;
         });
         addEvents(newEventsComplete);
