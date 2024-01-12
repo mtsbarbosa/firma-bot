@@ -241,7 +241,8 @@ test('simple valid name and event is created', async () => {
         "poll_id": "5125448558970928179",
         "poll_message_id": 45,
         "type": "Panfletagem",
-        "created_at": "2023-11-15 12:00"
+        "created_at": "2023-11-15 12:00",
+        "total_options": 2,
     });
 });
 

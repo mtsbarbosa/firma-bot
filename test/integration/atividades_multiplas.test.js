@@ -489,7 +489,8 @@ test('ok is sent', async () => {
         "location": "SBC - Bairro",
         "poll_id": "5125448558970928179",
         "poll_message_id": 45, 
-        "type": "Ato regional"}, 
+        "type": "Ato regional",
+        "total_options": 3}, 
         {"created_at": "2023-11-15 12:00",
         "date_time": "2023-09-14 15:00", 
         "event_name": "Panfletagem em SA", 
@@ -497,6 +498,7 @@ test('ok is sent', async () => {
         "location": "SA - Centro",
         "poll_id": "5125448558970928179",
         "poll_message_id": 45, 
-        "type": "Panfletagem"
+        "type": "Panfletagem",
+        "total_options": 3
     }]);
 });

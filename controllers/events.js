@@ -237,7 +237,8 @@ const createSimpleEvent = async (bot, chatId, targetChat, targetThread) => {
             type: events[chatId].type,
             poll_message_id: pollMessageId,
             poll_id: pollId,
-            created_at: DateTime.now().toFormat('yyyy-MM-dd HH:mm')
+            created_at: DateTime.now().toFormat('yyyy-MM-dd HH:mm'),
+            total_options: 2
         });
         delete events[chatId];
     };
@@ -283,6 +284,7 @@ const createMultiDateEvent = async (bot, chatId, targetChat, targetThread) => {
             event.poll_id = pollId;
             event.id = generateUUID();
             event.created_at = currentDate;
+            event.total_options = options.length;
             return event;
         });
         addEvents(newEventsComplete);
