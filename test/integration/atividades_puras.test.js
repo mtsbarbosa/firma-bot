@@ -1,6 +1,6 @@
-const { sendMessage, unpinChatMessage, stopPoll, sendPoll, pinChatMessage } = require('../../http_out/telegram');
-const { getEvents, replaceEvents, addEvent, addEvents } = require('../../http_out/jsonstorage');
-const { onFechaEnquetes, startEvent, startSimple, clearMemory, updateEvents, inMemEvents, receiveDateTime, receiveLocation, receiveType, receiveEventName, addOptionName } = require('../../controllers/events');
+const { sendMessage, sendPoll, pinChatMessage } = require('../../http_out/telegram');
+const { getEvents, addEvent, addEvents } = require('../../http_out/jsonstorage');
+const { clearMemory, updateEvents, inMemEvents, receiveEventName, addOptionName } = require('../../controllers/events');
 const { generateUUID } = require('../../commons/uuid.js');
 
 jest.mock('../../http_out/jsonstorage.js');

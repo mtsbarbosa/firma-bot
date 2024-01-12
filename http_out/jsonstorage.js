@@ -106,11 +106,15 @@ const upsertParticipation = async (record) => {
 
 const upsertVote = async (vote) => {
     const record = await getParticipation();
-    
-    if(!record.votes[vote.poll_id]){
-        record.votes[vote.poll_id] = {};
+    if (vote.option_ids.length === 0) {
+        delete record.votes[vote.poll_id][vote.user.id.toString()];
+    }else{
+        if(!record.votes[vote.poll_id]){
+            record.votes[vote.poll_id] = {};
+        }
+        record.votes[vote.poll_id][vote.user.id.toString()] = {user: vote.user, options: vote.option_ids};
     }
-    record.votes[vote.poll_id][vote.user.id.toString()] = {user: vote.user, options: vote.option_ids};
+    
     return upsertParticipation(record);
 }
 
