@@ -86,6 +86,42 @@ test('onFechaEnquetes outdated singles and votes are removed', async () => {
   expect(sendMessage).toHaveBeenCalledWith({}, 123, 'Enquetes vencidas finalizadas.');
 });
 
+test('onFechaEnquetes outdated availabilities are removed', async () => {
+  getEvents.mockImplementation(() => Promise.resolve(
+    {"events":[], "availabilities":[{
+        "id":"7e974c87-60e9-4bfa-8418-8a1b38b0ccca",
+        "name":"Próximas atividades",
+        "date_time": "2023-11-13 09:15",
+        "dates":["2023-11-30 10:00","2023-11-30 14:00"],
+        "poll_message_id":141}]}));
+  getParticipation.mockImplementation(() => Promise.resolve(Promise.resolve(
+          {votes:{},
+           members:[":Rosa:Luxemburgo:124","lenin1917:Lenin::123"]})));
+  const mockMsg = {
+    chat: {
+      id: 123
+    },
+    text: '/fecha_enquetes'
+  };
+
+  await onFechaEnquetes({}, '1234', '01234', mockMsg);
+  
+  expect(stopPoll).toHaveBeenCalledTimes(1);
+  expect(stopPoll).toHaveBeenCalledWith({}, '1234', 141, {"message_thread_id": "01234"});
+
+  expect(unpinChatMessage).toHaveBeenCalledTimes(1);
+  expect(unpinChatMessage).toHaveBeenCalledWith({}, '1234', 141);
+
+  expect(replaceEvents).toHaveBeenCalledTimes(1);
+  expect(replaceEvents).toHaveBeenCalledWith([]);
+
+  expect(replaceAvailabilities).toHaveBeenCalledTimes(1);
+  expect(replaceAvailabilities).toHaveBeenCalledWith([]);
+
+  expect(sendMessage).toHaveBeenCalledTimes(1);
+  expect(sendMessage).toHaveBeenCalledWith({}, 123, 'Enquetes vencidas finalizadas.');
+});
+
 test('onFechaEnquetes outdated multiple and votes are removed', async () => {
     getEvents.mockImplementation(() => Promise.resolve(
       {"events":[
